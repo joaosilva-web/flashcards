@@ -1,0 +1,94 @@
+import katex from 'katex'
+import { sanitizeHtml } from './sanitizer'
+
+/**
+ * Converte marcações especiais em HTML formatado
+ * Suporta:
+ * - $formula$ para matemática (KaTeX)
+ * - **texto** ou __texto__ para negrito
+ * - *texto* ou _texto_ para itálico
+ * - ~texto~ para subscrito
+ * - ^texto^ para sobrescrito
+ * - `código` para código inline
+ */
+export function parseMarkdownToHtml(text: string): string {
+  let html = text
+
+  // 1. Processar fórmulas matemáticas ($...$)
+  // Usar regex para capturar conteúdo entre $ sem capturar espaços nas bordas
+  html = html.replace(/\$([^\$]+?)\$/g, (match, formula) => {
+    try {
+      // Trim da fórmula para remover espaços desnecessários
+      const cleanFormula = formula.trim()
+      if (!cleanFormula) return match
+
+      const result = katex.renderToString(cleanFormula, {
+        throwOnError: false, // Não lançar erro - renderizar o que conseguir
+        displayMode: false,
+        strict: false, // Permite sintaxe mais relaxada
+        trust: false, // Segurança
+        output: 'html', // HTML - melhor compatibilidade entre navegadores
+      })
+
+      return result
+    } catch (error) {
+      // Se der erro, retornar a fórmula original envolta em itálico como fallback
+      const errorMsg = error instanceof Error ? error.message : 'erro desconhecido'
+      console.warn(`⚠️ LaTeX parse error for "${formula}":`, errorMsg)
+
+      // Fallback: renderizar como texto matemático simples em itálico
+      return `<em class="math-fallback" title="LaTeX: ${errorMsg}">${formula}</em>`
+    }
+  })
+
+  // 2. Processar negrito (**texto** ou __texto__)
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>')
+
+  // 3. Processar itálico (*texto* ou _texto_)
+  // Importante: fazer depois do negrito para não conflitar
+  html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>')
+  html = html.replace(/_([^_]+?)_/g, '<em>$1</em>')
+
+  // 4. Processar subscrito (~texto~)
+  html = html.replace(/~(.+?)~/g, '<sub>$1</sub>')
+
+  // 5. Processar sobrescrito (^texto^)
+  html = html.replace(/\^(.+?)\^/g, '<sup>$1</sup>')
+
+  // 6. Processar código inline (`código`)
+  html = html.replace(
+    /`(.+?)`/g,
+    '<code class="bg-gray-200 dark:bg-gray-800 px-1 rounded text-sm font-mono">$1</code>'
+  )
+
+  // 7. Processar quebras de linha
+  html = html.replace(/\n/g, '<br>')
+
+  // 8. Sanitizar contra XSS
+  html = sanitizeHtml(html)
+
+  return html
+}
+
+/**
+ * Remove tags HTML e retorna apenas texto
+ */
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '')
+}
+
+/**
+ * Valida se uma fórmula matemática é válida
+ */
+export function validateMathFormula(formula: string): boolean {
+  try {
+    katex.renderToString(formula, {
+      throwOnError: true,
+      displayMode: false,
+    })
+    return true
+  } catch {
+    return false
+  }
+}
