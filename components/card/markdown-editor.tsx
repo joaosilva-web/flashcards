@@ -3,7 +3,19 @@
 import { useRef, useState, useEffect } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Bold, Italic, Calculator, Superscript, Subscript, Underline, Strikethrough, Code, List, Quote, Highlighter } from 'lucide-react'
+import {
+  Bold,
+  Italic,
+  Calculator,
+  Superscript,
+  Subscript,
+  Underline,
+  Strikethrough,
+  Code,
+  List,
+  Quote,
+  Highlighter,
+} from 'lucide-react'
 import { parseMarkdownToHtml } from '@/lib/parsers/markdown-parser'
 
 interface MarkdownEditorProps {

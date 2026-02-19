@@ -77,14 +77,20 @@ export function parseMarkdownToHtml(text: string): string {
   )
 
   // 10. Processar listas (- item)
-  html = html.replace(/^- (.+)$/gm, '<li class="list-disc list-inside ml-4" style="line-height: 1.2; margin: 0; padding: 0;">$1</li>')
+  html = html.replace(
+    /^- (.+)$/gm,
+    '<li class="list-disc list-inside ml-4" style="line-height: 1.2; margin: 0; padding: 0;">$1</li>'
+  )
 
   // 11. Processar citações (> texto)
-  html = html.replace(/^> (.+)$/gm, '<blockquote class="border-l-4 border-gray-400 my-2 rounded-r" style="background-color: #f3f4f6; color: #374151; font-style: italic; word-wrap: break-word; overflow-wrap: break-word; padding: 1rem 1.5rem 1rem 3.5rem; display: block;"><span style="font-size: 2.5rem; color: #9ca3af; line-height: 0; position: absolute; margin-left: -2.5rem; margin-top: 0.5rem;">"</span>$1</blockquote>')
+  html = html.replace(
+    /^> (.+)$/gm,
+    '<blockquote class="border-l-4 border-gray-400 my-2 rounded-r" style="background-color: #f3f4f6; color: #374151; font-style: italic; word-wrap: break-word; overflow-wrap: break-word; padding: 1rem 1.5rem 1rem 3.5rem; display: block;"><span style="font-size: 2.5rem; color: #9ca3af; line-height: 0; position: absolute; margin-left: -2.5rem; margin-top: 0.5rem;">"</span>$1</blockquote>'
+  )
 
   // 12. Processar quebras de linha (mas não entre elementos de bloco como listas e citações)
   html = html.replace(/\n/g, '<br>')
-  
+
   // Remover <br> desnecessários entre elementos de lista e citações
   html = html.replace(/<\/li><br>/g, '</li>')
   html = html.replace(/<br><li/g, '<li')
