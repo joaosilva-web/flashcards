@@ -30,7 +30,7 @@ export default function EditCardPage() {
     async function loadCard() {
       try {
         const result = await getCard(cardId)
-        if (result.success && result.data) {
+        if (result.success) {
           setFront(result.data.front)
           setBack(result.data.back)
           setDeckId(result.data.deck_id)
