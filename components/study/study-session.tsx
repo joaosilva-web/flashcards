@@ -37,20 +37,16 @@ interface StudySessionProps {
 }
 
 export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
-  const [cardQueue, setCardQueue] = useState<StudyCard[]>(cards)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [loading, setLoading] = useState(false)
   const [startTime, setStartTime] = useState(Date.now())
   const [cardsCorrect, setCardsCorrect] = useState(0)
-  const [totalCardsReviewed, setTotalCardsReviewed] = useState(0)
-  const [cardAttempts, setCardAttempts] = useState<Map<string, number>>(new Map())
   const router = useRouter()
   const { toast } = useToast()
 
-  const currentCard = cardQueue[currentIndex]
-  const currentAttempts = cardAttempts.get(currentCard?.cards.id) || 0
-  const progress = ((totalCardsReviewed + 1) / cards.length) * 100
+  const currentCard = cards[currentIndex]
+  const progress = ((currentIndex + 1) / cards.length) * 100
 
   const finishSession = async () => {
     if (sessionId) {
@@ -73,85 +69,26 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
     const timeSpent = Date.now() - startTime
 
     try {
-      // Se errou ou achou difícil
-      if (rating < 3) {
-        // Verificar se já tentou 2 vezes (esta seria a 3ª)
-        if (currentAttempts >= 2) {
-          // Depois de 2 erros, a 3ª tentativa só pula sem chamar reviewCard
-          // para evitar que ease_factor seja penalizado demais
-          toast({
-            title: 'Card muito difícil',
-            description: 'Passando para o próximo. Você revisará este card amanhã.',
-            variant: 'destructive',
-          })
-
-          setTotalCardsReviewed((prev) => prev + 1)
-
-          // Avançar normalmente
-          if (currentIndex < cardQueue.length - 1) {
-            setCurrentIndex((prev) => prev + 1)
-            setIsFlipped(false)
-            setStartTime(Date.now())
-          } else {
-            // Última carta
-            finishSession()
-          }
-          setLoading(false)
-          return
-        }
-      }
-
-      // Chamar reviewCard apenas se não pulou acima
+      // Registrar a revisão no banco de dados
       const result = await reviewCard(currentCard.cards.id, rating, timeSpent)
 
       if (!result.success) {
         throw new Error(result.error)
       }
 
+      // Contabilizar acertos
       if (rating >= 3) {
         setCardsCorrect((prev) => prev + 1)
       }
 
-      // Atualizar contador de tentativas
-      const attempts = currentAttempts + 1
-      const newAttempts = new Map(cardAttempts)
-      newAttempts.set(currentCard.cards.id, attempts)
-      setCardAttempts(newAttempts)
-
-      // Se errou ou achou difícil (e não pulou acima)
-      if (rating < 3) {
-        // Menos de 3 tentativas: recolocar no final da fila
-        const newQueue = [...cardQueue]
-        const [removedCard] = newQueue.splice(currentIndex, 1)
-        newQueue.push(removedCard)
-        setCardQueue(newQueue)
-
-        // Não incrementar totalCardsReviewed porque vai revisar novamente
+      // Avançar para o próximo card
+      if (currentIndex < cards.length - 1) {
+        setCurrentIndex((prev) => prev + 1)
         setIsFlipped(false)
         setStartTime(Date.now())
-
-        // Se estava no final da fila, voltar pro início
-        if (currentIndex >= newQueue.length) {
-          setCurrentIndex(0)
-        }
-
-        toast({
-          title: `Tentativa ${attempts} de 3`,
-          description: 'Você verá este card novamente nesta sessão',
-        })
       } else {
-        // Acertou: avançar normalmente
-        setTotalCardsReviewed((prev) => prev + 1)
-
-        // Próximo card
-        if (currentIndex < cardQueue.length - 1) {
-          setCurrentIndex((prev) => prev + 1)
-          setIsFlipped(false)
-          setStartTime(Date.now())
-        } else {
-          // Sessão concluída
-          finishSession()
-        }
+        // Última carta - finalizar sessão
+        finishSession()
       }
     } catch (error: any) {
       toast({
@@ -183,13 +120,7 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            Card {totalCardsReviewed + 1} de {cards.length} | Restantes:{' '}
-            {cardQueue.length - currentIndex}
-            {currentAttempts > 0 && (
-              <span className="ml-2 text-orange-600 font-semibold">
-                • Tentativa {currentAttempts}/3
-              </span>
-            )}
+            Card {currentIndex + 1} de {cards.length} | Restantes: {cards.length - currentIndex - 1}
           </span>
           <span className="font-medium">{Math.round(progress)}%</span>
         </div>
