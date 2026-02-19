@@ -17,7 +17,10 @@ type CardWithState = Card & {
   card_states: CardState[] | CardState
 }
 
-function formatTimeUntilDue(dueDate: string): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+function formatTimeUntilDue(dueDate: string): {
+  text: string
+  variant: 'default' | 'secondary' | 'destructive' | 'outline'
+} {
   const now = new Date()
   const due = new Date(dueDate)
   const diffMs = due.getTime() - now.getTime()
@@ -85,10 +88,12 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
   // Buscar cards do deck com seus estados
   const { data: cards } = (await supabase
     .from('cards')
-    .select(`
+    .select(
+      `
       *,
       card_states!inner(*)
-    `)
+    `
+    )
     .eq('deck_id', params.id)
     .eq('card_states.user_id', user.id)
     .order('position', { ascending: true, nullsFirst: false })
@@ -104,145 +109,147 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
 
   return (
     <AppLayout>
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" asChild className="mb-4">
-          <Link href="/decks">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Link>
-        </Button>
-        <div className="flex items-center gap-4 mb-2">
-          <span className="text-5xl">{deck.icon}</span>
-          <div>
-            <h1 className="text-4xl font-bold">{deck.name}</h1>
-            {deck.description && <p className="text-muted-foreground mt-1">{deck.description}</p>}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Total de Cards</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{cards?.length || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Para Revisar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{dueCount || 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Taxa de Progresso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-              {cards && cards.length > 0
-                ? Math.round(((cards.length - (dueCount || 0)) / cards.length) * 100)
-                : 0}
-              %
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-4">
-        {(dueCount || 0) > 0 && (
-          <Button asChild size="lg" className="flex-1">
-            <Link href={`/decks/${params.id}/study`}>
-              <Play className="mr-2 h-4 w-4" />
-              Estudar ({dueCount} cards)
+      <div className="space-y-6">
+        <div>
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href="/decks">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
             </Link>
           </Button>
-        )}
-        <Button variant="outline" asChild size="lg">
-          <Link href={`/decks/${params.id}/import`}>
-            <Upload className="mr-2 h-4 w-4" />
-            Importar CSV
-          </Link>
-        </Button>
-        <Button variant="outline" asChild size="lg">
-          <Link href={`/cards/new?deck=${params.id}`}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Card
-          </Link>
-        </Button>
-      </div>
-
-      {/* Cards List */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Cards ({cards?.length || 0})</h2>
-          {cards && cards.length > 0 && (
-            <DeleteAllCardsButton deckId={params.id} cardCount={cards.length} />
-          )}
-        </div>
-        {cards && cards.length > 0 ? (
-          <div className="space-y-2">
-            {cards.map((card: CardWithState) => {
-              const cardState = Array.isArray(card.card_states) ? card.card_states[0] : card.card_states
-              const timeUntil = cardState ? formatTimeUntilDue(cardState.due_date) : null
-
-              return (
-                <Card key={card.id} className="hover:border-primary transition-colors">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-xs text-muted-foreground">Frente</p>
-                          {timeUntil && (
-                            <Badge variant={timeUntil.variant} className="text-xs">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {timeUntil.text}
-                            </Badge>
-                          )}
-                        </div>
-                        <div
-                          className="text-sm line-clamp-2"
-                          dangerouslySetInnerHTML={{ __html: card.front_html || card.front }}
-                        />
-                      </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/cards/${card.id}/edit`}>Editar</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+          <div className="flex items-center gap-4 mb-2">
+            <span className="text-5xl">{deck.icon}</span>
+            <div>
+              <h1 className="text-4xl font-bold">{deck.name}</h1>
+              {deck.description && <p className="text-muted-foreground mt-1">{deck.description}</p>}
+            </div>
           </div>
-        ) : (
+        </div>
+
+        {/* Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
-            <CardContent className="py-16 text-center">
-              <p className="text-muted-foreground mb-4">Nenhum card neste baralho ainda</p>
-              <div className="flex gap-2 justify-center">
-                <Button asChild>
-                  <Link href={`/cards/new?deck=${params.id}`}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar Card
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/decks/${params.id}/import`}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Importar CSV
-                  </Link>
-                </Button>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Total de Cards</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{cards?.length || 0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Para Revisar</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{dueCount || 0}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Taxa de Progresso</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {cards && cards.length > 0
+                  ? Math.round(((cards.length - (dueCount || 0)) / cards.length) * 100)
+                  : 0}
+                %
               </div>
             </CardContent>
           </Card>
-        )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-4">
+          {(dueCount || 0) > 0 && (
+            <Button asChild size="lg" className="flex-1">
+              <Link href={`/decks/${params.id}/study`}>
+                <Play className="mr-2 h-4 w-4" />
+                Estudar ({dueCount} cards)
+              </Link>
+            </Button>
+          )}
+          <Button variant="outline" asChild size="lg">
+            <Link href={`/decks/${params.id}/import`}>
+              <Upload className="mr-2 h-4 w-4" />
+              Importar CSV
+            </Link>
+          </Button>
+          <Button variant="outline" asChild size="lg">
+            <Link href={`/cards/new?deck=${params.id}`}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Card
+            </Link>
+          </Button>
+        </div>
+
+        {/* Cards List */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Cards ({cards?.length || 0})</h2>
+            {cards && cards.length > 0 && (
+              <DeleteAllCardsButton deckId={params.id} cardCount={cards.length} />
+            )}
+          </div>
+          {cards && cards.length > 0 ? (
+            <div className="space-y-2">
+              {cards.map((card: CardWithState) => {
+                const cardState = Array.isArray(card.card_states)
+                  ? card.card_states[0]
+                  : card.card_states
+                const timeUntil = cardState ? formatTimeUntilDue(cardState.due_date) : null
+
+                return (
+                  <Card key={card.id} className="hover:border-primary transition-colors">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-xs text-muted-foreground">Frente</p>
+                            {timeUntil && (
+                              <Badge variant={timeUntil.variant} className="text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {timeUntil.text}
+                              </Badge>
+                            )}
+                          </div>
+                          <div
+                            className="text-sm line-clamp-2"
+                            dangerouslySetInnerHTML={{ __html: card.front_html || card.front }}
+                          />
+                        </div>
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/cards/${card.id}/edit`}>Editar</Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <p className="text-muted-foreground mb-4">Nenhum card neste baralho ainda</p>
+                <div className="flex gap-2 justify-center">
+                  <Button asChild>
+                    <Link href={`/cards/new?deck=${params.id}`}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Criar Card
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href={`/decks/${params.id}/import`}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Importar CSV
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
     </AppLayout>
   )
 }

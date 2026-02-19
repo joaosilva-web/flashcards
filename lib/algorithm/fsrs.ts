@@ -211,7 +211,7 @@ export function calculateNextReview(
       newRepetitions = 1
       newState = 'learning'
       newInterval = calculateInterval(newStability)
-      
+
       // Se rating 2 (Hard), reduzir intervalo
       if (rating === 2) {
         newInterval = Math.max(1, Math.round(newInterval * 0.5))
