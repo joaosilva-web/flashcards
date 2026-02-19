@@ -24,7 +24,7 @@ export function FixEaseFactorsButton() {
     setLoading(true)
     try {
       const result = await fixEaseFactors()
-      
+
       if (result.success) {
         toast({
           title: 'Correção concluída',
@@ -55,7 +55,8 @@ export function FixEaseFactorsButton() {
         <AlertDialogHeader>
           <AlertDialogTitle>Corrigir ease factors inválidos?</AlertDialogTitle>
           <AlertDialogDescription>
-            Isso vai corrigir todos os ease factors inválidos no banco de dados, definindo-os para o valor padrão de 2.5.
+            Isso vai corrigir todos os ease factors inválidos no banco de dados, definindo-os para o
+            valor padrão de 2.5.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -74,7 +74,9 @@ export function DeleteDeckButton({ deckId, deckName, cardCount }: DeleteDeckButt
       </AlertDialogTrigger>
       <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Tem certeza que deseja deletar o baralho "{deckName}"?</AlertDialogTitle>
+          <AlertDialogTitle>
+            Tem certeza que deseja deletar o baralho "{deckName}"?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Isso irá remover permanentemente:
             <ul className="list-disc list-inside mt-2 space-y-1">

@@ -74,7 +74,9 @@ export function DeleteAllCardsButton({ deckId, cardCount }: DeleteAllCardsButton
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Tem certeza que deseja deletar TODOS os {cardCount} cards?</AlertDialogTitle>
+          <AlertDialogTitle>
+            Tem certeza que deseja deletar TODOS os {cardCount} cards?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita e removerá:
             <ul className="list-disc list-inside mt-2 space-y-1">
