@@ -3,13 +3,61 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Plus, Play, Upload } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Plus, Play, Upload, Clock } from 'lucide-react'
 import { Database } from '@/types/database'
 import { DeleteAllCardsButton } from '@/components/deck/delete-all-cards-button'
 import { AppLayout } from '@/components/layout/app-layout'
 
 type Deck = Database['public']['Tables']['decks']['Row']
 type Card = Database['public']['Tables']['cards']['Row']
+type CardState = Database['public']['Tables']['card_states']['Row']
+
+type CardWithState = Card & {
+  card_states: CardState[]
+}
+
+function formatTimeUntilDue(dueDate: string): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+  const now = new Date()
+  const due = new Date(dueDate)
+  const diffMs = due.getTime() - now.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMs <= 0) {
+    return { text: 'Revisar agora', variant: 'destructive' }
+  }
+
+  if (diffHours < 1) {
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    return { text: `${diffMinutes}m`, variant: 'destructive' }
+  }
+
+  if (diffHours < 24) {
+    return { text: `${diffHours}h`, variant: 'destructive' }
+  }
+
+  if (diffDays === 1) {
+    return { text: '1 dia', variant: 'secondary' }
+  }
+
+  if (diffDays < 7) {
+    return { text: `${diffDays} dias`, variant: 'secondary' }
+  }
+
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    return { text: `${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`, variant: 'outline' }
+  }
+
+  if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30)
+    return { text: `${months} ${months === 1 ? 'mês' : 'meses'}`, variant: 'outline' }
+  }
+
+  const years = Math.floor(diffDays / 365)
+  return { text: `${years} ${years === 1 ? 'ano' : 'anos'}`, variant: 'default' }
+}
 
 export default async function DeckDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerClient()
@@ -34,13 +82,17 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
     notFound()
   }
 
-  // Buscar cards do deck
+  // Buscar cards do deck com seus estados
   const { data: cards } = (await supabase
     .from('cards')
-    .select('*')
+    .select(`
+      *,
+      card_states!inner(*)
+    `)
     .eq('deck_id', params.id)
+    .eq('card_states.user_id', user.id)
     .order('position', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: false })) as { data: Card[] | null }
+    .order('created_at', { ascending: false })) as { data: CardWithState[] | null }
 
   // Buscar cards vencidos para este deck
   const { count: dueCount } = await supabase
@@ -136,24 +188,37 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
         </div>
         {cards && cards.length > 0 ? (
           <div className="space-y-2">
-            {cards.map((card: any) => (
-              <Card key={card.id} className="hover:border-primary transition-colors">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground mb-1">Frente</p>
-                      <div
-                        className="text-sm line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: card.front_html || card.front }}
-                      />
+            {cards.map((card: CardWithState) => {
+              const cardState = card.card_states[0]
+              const timeUntil = cardState ? formatTimeUntilDue(cardState.due_date) : null
+
+              return (
+                <Card key={card.id} className="hover:border-primary transition-colors">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-xs text-muted-foreground">Frente</p>
+                          {timeUntil && (
+                            <Badge variant={timeUntil.variant} className="text-xs">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {timeUntil.text}
+                            </Badge>
+                          )}
+                        </div>
+                        <div
+                          className="text-sm line-clamp-2"
+                          dangerouslySetInnerHTML={{ __html: card.front_html || card.front }}
+                        />
+                      </div>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/cards/${card.id}/edit`}>Editar</Link>
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/cards/${card.id}/edit`}>Editar</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         ) : (
           <Card>
