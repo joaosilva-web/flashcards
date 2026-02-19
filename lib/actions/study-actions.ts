@@ -69,7 +69,7 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
   const safeStability = Math.max(0.1, nextReview.newStability)
   const safeRetrievability = Math.max(0, Math.min(1, nextReview.newRetrievability))
   const safeInterval = Math.max(0, Math.round(nextReview.newInterval))
-  
+
   // Manter ease_factor para compatibilidade (será removido no futuro)
   let safeEaseFactor = nextReview.newEaseFactor
   safeEaseFactor = Math.max(1.3, Math.min(2.5, safeEaseFactor))

@@ -18,7 +18,7 @@ export function calculateNextReview(
   // Calcular novo Ease Factor apenas se não estiver em reaprendizagem repetida
   // ou se a resposta for positiva (>= 3)
   let newEaseFactor = easeFactor
-  
+
   if (rating >= 3 || state !== 'relearning') {
     // Só penalizar EF se não estiver preso em relearning
     newEaseFactor = calculateEaseFactor(easeFactor, rating)
@@ -32,7 +32,7 @@ export function calculateNextReview(
     // Resposta incorreta (Errei ou Difícil)
     repetitions = 0
     state = state === 'new' ? 'learning' : 'relearning'
-    
+
     // Aplicar intervalo mínimo de 0 dias (revisar hoje mesmo)
     interval = 0
   } else {
@@ -79,7 +79,12 @@ export function calculateNextReview(
   dueDate.setDate(dueDate.getDate() + interval)
 
   // VALIDAÇÃO FINAL: Garantir absolutamente que ease_factor está válido
-  if (isNaN(newEaseFactor) || !isFinite(newEaseFactor) || newEaseFactor < MIN_EASE_FACTOR || newEaseFactor > MAX_EASE_FACTOR) {
+  if (
+    isNaN(newEaseFactor) ||
+    !isFinite(newEaseFactor) ||
+    newEaseFactor < MIN_EASE_FACTOR ||
+    newEaseFactor > MAX_EASE_FACTOR
+  ) {
     console.error('🚨 ERRO: ease_factor inválido detectado!', {
       original: easeFactor,
       calculated: newEaseFactor,
@@ -116,18 +121,18 @@ function calculateEaseFactor(currentEF: number, rating: DifficultyRating): numbe
   if (isNaN(currentEF) || !isFinite(currentEF) || currentEF < 1.3) {
     currentEF = 2.5 // Resetar para valor padrão se inválido
   }
-  
+
   // Fórmula SM-2
   const newEF = currentEF + (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02))
 
   // Garantir limites
   const safeEF = Math.max(MIN_EASE_FACTOR, Math.min(MAX_EASE_FACTOR, newEF))
-  
+
   // Validação final
   if (isNaN(safeEF) || !isFinite(safeEF)) {
     return 2.5 // Fallback para valor padrão
   }
-  
+
   return safeEF
 }
 

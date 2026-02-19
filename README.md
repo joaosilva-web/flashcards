@@ -128,6 +128,7 @@ S' = S * (1 + e^(w1) * D^(w2) * S^(w3) * (1-R)^(w4))
 ```
 
 **Vantagens sobre SM-2:**
+
 - Modelagem matemática mais precisa
 - Parâmetros otimizados empiricamente
 - Considera probabilidade de esquecimento

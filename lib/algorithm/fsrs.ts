@@ -16,21 +16,21 @@ const MAX_DIFFICULTY = 10.0
 // Parâmetros treináveis do FSRS (valores otimizados empiricamente)
 const FSRS_WEIGHTS = {
   // Pesos para atualização de estabilidade (quando acerta)
-  w1: 0.4072,  // e^(w1)
-  w2: 1.1829,  // D^(w2)
-  w3: 3.1262,  // S^(w3)
+  w1: 0.4072, // e^(w1)
+  w2: 1.1829, // D^(w2)
+  w3: 3.1262, // S^(w3)
   w4: 15.4722, // (1-R)^(w4)
-  
+
   // Peso para atualização de dificuldade
-  w5: 0.5846,   // taxa de ajuste de dificuldade
-  
+  w5: 0.5846, // taxa de ajuste de dificuldade
+
   // Pesos para estabilidade inicial (primeiro aprendizado)
-  w6: 1.0,      // multiplicador base de estabilidade inicial
-  w7: 0.1,      // fator de dificuldade inicial
-  
+  w6: 1.0, // multiplicador base de estabilidade inicial
+  w7: 0.1, // fator de dificuldade inicial
+
   // Pesos para reaprendizado (quando erra)
-  w8: 0.9,      // fator de retenção de estabilidade após erro
-  w9: 2.0,      // fator de recuperação de estabilidade
+  w8: 0.9, // fator de retenção de estabilidade após erro
+  w9: 2.0, // fator de recuperação de estabilidade
 }
 
 /**
@@ -43,7 +43,7 @@ const FSRS_WEIGHTS = {
 function calculateRetrievability(stability: number, daysSinceReview: number): number {
   if (stability <= 0) return 1.0
   if (daysSinceReview <= 0) return 1.0
-  
+
   const retrievability = Math.exp(-daysSinceReview / stability)
   return Math.max(0, Math.min(1, retrievability))
 }
@@ -55,9 +55,12 @@ function calculateRetrievability(stability: number, daysSinceReview: number): nu
  * @param requestRetention - Retenção desejada (padrão 0.9)
  * @returns Intervalo em dias
  */
-function calculateInterval(stability: number, requestRetention: number = REQUEST_RETENTION): number {
+function calculateInterval(
+  stability: number,
+  requestRetention: number = REQUEST_RETENTION
+): number {
   if (stability <= 0) return 0
-  
+
   const interval = -stability * Math.log(requestRetention)
   return Math.max(1, Math.min(MAXIMUM_INTERVAL, Math.round(interval)))
 }
@@ -76,21 +79,21 @@ function updateStabilityOnSuccess(
   retrievability: number
 ): number {
   const { w1, w2, w3, w4 } = FSRS_WEIGHTS
-  
+
   // Se for primeira revisão, usar estabilidade mínima
   if (currentStability < MINIMUM_STABILITY) {
     currentStability = MINIMUM_STABILITY
   }
-  
+
   // Calcular ganho de estabilidade
-  const successFactor = 1 - retrievability  // "surpresa" - quanto mais difícil, maior o ganho
-  const difficultyFactor = Math.pow(difficulty, -w2)  // cards mais difíceis ganham menos
-  const stabilityFactor = Math.pow(currentStability, -w3)  // estabilidade diminui retornos
+  const successFactor = 1 - retrievability // "surpresa" - quanto mais difícil, maior o ganho
+  const difficultyFactor = Math.pow(difficulty, -w2) // cards mais difíceis ganham menos
+  const stabilityFactor = Math.pow(currentStability, -w3) // estabilidade diminui retornos
   const retrievabilityFactor = Math.pow(successFactor, w4)
-  
+
   const stabilityGain = Math.exp(w1) * difficultyFactor * stabilityFactor * retrievabilityFactor
   const newStability = currentStability * (1 + stabilityGain)
-  
+
   return Math.max(MINIMUM_STABILITY, newStability)
 }
 
@@ -102,14 +105,14 @@ function updateStabilityOnSuccess(
  */
 function updateStabilityOnFailure(currentStability: number): number {
   const { w8, w9 } = FSRS_WEIGHTS
-  
+
   if (currentStability < MINIMUM_STABILITY) {
     return MINIMUM_STABILITY
   }
-  
+
   // Reaprender: estabilidade é reduzida mas não volta ao zero
   const newStability = w8 * Math.pow(currentStability, w9)
-  
+
   return Math.max(MINIMUM_STABILITY, newStability)
 }
 
@@ -127,17 +130,17 @@ function updateDifficulty(
   retrievability: number
 ): number {
   const { w5 } = FSRS_WEIGHTS
-  
+
   // Expected rating baseado na retrievability:
   // R alta -> deveria ser fácil (rating 4)
   // R baixa -> deveria ser difícil (rating 2)
-  const expectedRating = 1 + 3 * retrievability  // mapeia [0,1] -> [1,4]
-  
+  const expectedRating = 1 + 3 * retrievability // mapeia [0,1] -> [1,4]
+
   // Se acertou quando R era baixa -> reduz dificuldade (card mais fácil)
   // Se errou quando R era alta -> aumenta dificuldade (card mais difícil)
   const difficultyDelta = w5 * (5 - rating - expectedRating)
   const newDifficulty = currentDifficulty + difficultyDelta
-  
+
   return Math.max(MIN_DIFFICULTY, Math.min(MAX_DIFFICULTY, newDifficulty))
 }
 
@@ -148,14 +151,14 @@ function updateDifficulty(
  */
 function calculateInitialStability(rating: DifficultyRating): number {
   const { w6, w7 } = FSRS_WEIGHTS
-  
+
   // Rating maior -> maior estabilidade inicial
   // 1 (Again) -> ~0.4 dias
   // 2 (Hard) -> ~1.0 dia
   // 3 (Good) -> ~2.5 dias
   // 4 (Easy) -> ~7.0 dias
   const baseStability = w6 * Math.pow(rating, w7 * rating)
-  
+
   return Math.max(MINIMUM_STABILITY, baseStability)
 }
 
@@ -203,7 +206,7 @@ export function calculateNextReview(
     if (rating >= 3) {
       // Acertou pela primeira vez
       newStability = calculateInitialStability(rating)
-      newDifficulty = 5.0 + (4 - rating) * 1.5  // Rating 4 -> D=3.5, Rating 3 -> D=6.5
+      newDifficulty = 5.0 + (4 - rating) * 1.5 // Rating 4 -> D=3.5, Rating 3 -> D=6.5
       newRetrievability = 1.0
       newRepetitions = 1
       newState = 'learning'
@@ -227,7 +230,7 @@ export function calculateNextReview(
       newRepetitions += 1
       newState = newRepetitions >= 2 ? 'review' : 'learning'
       newInterval = calculateInterval(newStability)
-      
+
       // Ajuste fino baseado no rating
       if (rating === 4) {
         // Easy: aumentar intervalo um pouco mais
@@ -280,11 +283,36 @@ export function calculateNextReview(
 export function calculateIntervalPreview(
   currentData: CardReviewData
 ): Record<DifficultyRating, number> {
+  const { state, stability, difficulty, retrievability } = currentData
+
+  // Para cards novos (stability = 0), simular o que aconteceria em cada rating
+  if (state === 'new' || stability <= 0) {
+    return {
+      1: 0, // Again: revisar hoje
+      2: 1, // Hard: 1 dia (usando estabilidade inicial mínima)
+      3: Math.round(calculateInterval(calculateInitialStability(3))), // Good: ~4 dias
+      4: Math.round(calculateInterval(calculateInitialStability(4))), // Easy: ~7 dias
+    }
+  }
+
+  // Para cards em aprendizado/revisão
+  // Calcular retrievability atual se não fornecida
+  const currentRetrievability =
+    retrievability !== undefined ? retrievability : calculateRetrievability(stability, 0)
+
+  // Simular a nova estabilidade para cada rating
+  const previewStabilities = {
+    1: updateStabilityOnFailure(stability), // Again: estabilidade reduzida
+    2: updateStabilityOnSuccess(stability, difficulty, currentRetrievability) * 0.85, // Hard: penalizar um pouco
+    3: updateStabilityOnSuccess(stability, difficulty, currentRetrievability), // Good: estabilidade normal
+    4: updateStabilityOnSuccess(stability, difficulty, currentRetrievability) * 1.2, // Easy: bônus
+  }
+
   return {
     1: 0, // Again: revisar hoje
-    2: Math.max(1, Math.round(calculateInterval(currentData.stability) * 0.5)), // Hard: ~50%
-    3: calculateInterval(currentData.stability), // Good: intervalo calculado
-    4: Math.round(calculateInterval(currentData.stability) * 1.3), // Easy: +30%
+    2: Math.max(1, calculateInterval(previewStabilities[2])), // Hard
+    3: calculateInterval(previewStabilities[3]), // Good
+    4: calculateInterval(previewStabilities[4]), // Easy
   }
 }
 

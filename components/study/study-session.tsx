@@ -54,12 +54,7 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
 
   const finishSession = async () => {
     if (sessionId) {
-      await endStudySession(
-        sessionId,
-        cards.length,
-        cardsCorrect,
-        Date.now() - startTime
-      )
+      await endStudySession(sessionId, cards.length, cardsCorrect, Date.now() - startTime)
     }
 
     toast({
@@ -89,9 +84,9 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
             description: 'Passando para o próximo. Você revisará este card amanhã.',
             variant: 'destructive',
           })
-          
+
           setTotalCardsReviewed((prev) => prev + 1)
-          
+
           // Avançar normalmente
           if (currentIndex < cardQueue.length - 1) {
             setCurrentIndex((prev) => prev + 1)
@@ -130,16 +125,16 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
         const [removedCard] = newQueue.splice(currentIndex, 1)
         newQueue.push(removedCard)
         setCardQueue(newQueue)
-        
+
         // Não incrementar totalCardsReviewed porque vai revisar novamente
         setIsFlipped(false)
         setStartTime(Date.now())
-        
+
         // Se estava no final da fila, voltar pro início
         if (currentIndex >= newQueue.length) {
           setCurrentIndex(0)
         }
-        
+
         toast({
           title: `Tentativa ${attempts} de 3`,
           description: 'Você verá este card novamente nesta sessão',
@@ -147,7 +142,7 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
       } else {
         // Acertou: avançar normalmente
         setTotalCardsReviewed((prev) => prev + 1)
-        
+
         // Próximo card
         if (currentIndex < cardQueue.length - 1) {
           setCurrentIndex((prev) => prev + 1)
@@ -188,7 +183,8 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            Card {totalCardsReviewed + 1} de {cards.length} | Restantes: {cardQueue.length - currentIndex}
+            Card {totalCardsReviewed + 1} de {cards.length} | Restantes:{' '}
+            {cardQueue.length - currentIndex}
             {currentAttempts > 0 && (
               <span className="ml-2 text-orange-600 font-semibold">
                 • Tentativa {currentAttempts}/3
@@ -226,7 +222,9 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
             difficulty: currentCard.difficulty,
             stability: currentCard.stability,
             retrievability: currentCard.retrievability,
-            lastReviewDate: currentCard.last_review_date ? new Date(currentCard.last_review_date) : undefined,
+            lastReviewDate: currentCard.last_review_date
+              ? new Date(currentCard.last_review_date)
+              : undefined,
           }}
         />
       </div>
