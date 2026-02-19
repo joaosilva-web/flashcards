@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { getCard, updateCard, deleteCard } from '@/lib/actions/card-actions'
+import { getCard, updateCard } from '@/lib/actions/card-actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { ArrowLeft, Eye, Trash2 } from 'lucide-react'
+import { ArrowLeft, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { FlashcardDisplay } from '@/components/flashcard/card-display'
 import { parseMarkdownToHtml } from '@/lib/parsers/markdown-parser'
 import { AppLayout } from '@/components/layout/app-layout'
+import { DeleteCardButton } from '@/components/card/delete-card-button'
 
 export default function EditCardPage() {
   const params = useParams()
@@ -77,34 +78,6 @@ export default function EditCardPage() {
         variant: 'destructive',
       })
     } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja excluir este card? Esta ação não pode ser desfeita.')) {
-      return
-    }
-
-    setSaving(true)
-    try {
-      const result = await deleteCard(cardId)
-
-      if (result.success) {
-        toast({
-          title: 'Card excluído',
-          description: 'O card foi removido do baralho',
-        })
-        router.push(`/decks/${deckId}`)
-      } else {
-        throw new Error(result.error)
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao excluir card',
-        description: error.message,
-        variant: 'destructive',
-      })
       setSaving(false)
     }
   }
@@ -245,3 +218,4 @@ export default function EditCardPage() {
     </AppLayout>
   )
 }
+DeleteCardButton cardId={cardId} deckId={deckId} /
