@@ -14,6 +14,9 @@ export async function getDueCards(
   deckId?: string,
   limit: number = 20
 ): Promise<CardStateWithCard[]> {
+  const now = new Date().toISOString()
+  console.log('🔍 getDueCards called:', { userId, deckId, now })
+
   let query = supabase
     .from('card_states')
     .select(
@@ -24,7 +27,7 @@ export async function getDueCards(
     )
     .eq('user_id', userId)
     .neq('state', 'new') // Excluir cards novos (já buscados em getNewCards)
-    .lte('due_date', new Date().toISOString())
+    .lte('due_date', now)
     .order('due_date', { ascending: true })
     .limit(limit)
 
@@ -35,6 +38,18 @@ export async function getDueCards(
   const { data, error } = await query
 
   if (error) throw error
+  
+  console.log('📋 getDueCards result:', {
+    count: data?.length || 0,
+    cards: (data as any)?.map((c: any) => ({
+      id: c.card_id,
+      state: c.state,
+      interval: c.interval_days,
+      due: c.due_date,
+      isDue: new Date(c.due_date) <= new Date(now)
+    }))
+  })
+
   return (data as any) || []
 }
 
@@ -47,6 +62,8 @@ export async function getNewCards(
   deckId?: string,
   limit: number = 10
 ): Promise<CardStateWithCard[]> {
+  console.log('🆕 getNewCards called:', { userId, deckId, limit })
+
   let query = supabase
     .from('card_states')
     .select(
@@ -67,6 +84,16 @@ export async function getNewCards(
   const { data, error } = await query
 
   if (error) throw error
+  
+  console.log('📋 getNewCards result:', {
+    count: data?.length || 0,
+    cards: (data as any)?.map((c: any) => ({
+      id: c.card_id,
+      state: c.state,
+      due: c.due_date
+    }))
+  })
+
   return (data as any) || []
 }
 

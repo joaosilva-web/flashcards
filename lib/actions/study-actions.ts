@@ -82,10 +82,12 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
     retrievability: { prev: cardState.retrievability, new: safeRetrievability },
     interval: safeInterval,
     state: nextReview.newState,
+    dueDate: nextReview.dueDate.toISOString(),
+    now: new Date().toISOString(),
   })
 
   // Atualizar estado do card
-  const { error: updateError } = await supabase
+  const { data: updateData, error: updateError } = await supabase
     .from('card_states')
     // @ts-ignore - Supabase type inference issue with update
     .update({
@@ -104,10 +106,24 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
     })
     .eq('card_id', cardId)
     .eq('user_id', user.id)
+    .select()
 
   if (updateError) {
+    console.error('❌ UPDATE ERROR:', updateError)
     return { success: false, error: updateError.message }
   }
+
+  if (!updateData || updateData.length === 0) {
+    console.error('❌ UPDATE returned no rows - RLS may be blocking')
+    return { success: false, error: 'Falha ao atualizar card_state' }
+  }
+
+  const updatedCard = updateData[0] as any
+  console.log('✅ Card updated successfully:', {
+    interval_days: updatedCard.interval_days,
+    due_date: updatedCard.due_date,
+    state: updatedCard.state,
+  })
 
   // Registrar log de revisão
   // @ts-ignore - Supabase type inference issue with insert
