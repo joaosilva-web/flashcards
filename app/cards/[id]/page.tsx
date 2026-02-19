@@ -80,69 +80,69 @@ export default function EditCardPage() {
   if (loading) {
     return (
       <AppLayout>
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando card...</p>
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Carregando card...</p>
+          </div>
         </div>
-      </div>
       </AppLayout>
     )
   }
 
   return (
     <AppLayout>
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <Button variant="ghost" asChild className="mb-4">
-          <Link href={`/decks/${deckId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Link>
-        </Button>
-        <h1 className="text-4xl font-bold mb-2">Editar Card</h1>
-        <p className="text-muted-foreground">Modifique o conteúdo do flashcard</p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <Button variant="ghost" asChild className="mb-4">
+            <Link href={`/decks/${deckId}`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Link>
+          </Button>
+          <h1 className="text-4xl font-bold mb-2">Editar Card</h1>
+          <p className="text-muted-foreground">Modifique o conteúdo do flashcard</p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Conteúdo do Card</CardTitle>
+              <CardDescription>
+                Use os botões da barra de ferramentas para aplicar formatações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <MarkdownEditor
+                  value={front}
+                  onChange={setFront}
+                  placeholder="Digite a pergunta ou conceito..."
+                  disabled={saving}
+                  label="Frente *"
+                  showPreview={true}
+                />
+
+                <MarkdownEditor
+                  value={back}
+                  onChange={setBack}
+                  placeholder="Digite a resposta..."
+                  disabled={saving}
+                  label="Verso *"
+                  showPreview={true}
+                />
+
+                <Button type="submit" disabled={saving || !front || !back} className="w-full">
+                  {saving ? 'Salvando...' : 'Salvar Alterações'}
+                </Button>
+
+                <DeleteCardButton cardId={cardId} deckId={deckId} />
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Conteúdo do Card</CardTitle>
-            <CardDescription>
-              Use os botões da barra de ferramentas para aplicar formatações
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <MarkdownEditor
-                value={front}
-                onChange={setFront}
-                placeholder="Digite a pergunta ou conceito..."
-                disabled={saving}
-                label="Frente *"
-                showPreview={true}
-              />
-
-              <MarkdownEditor
-                value={back}
-                onChange={setBack}
-                placeholder="Digite a resposta..."
-                disabled={saving}
-                label="Verso *"
-                showPreview={true}
-              />
-
-              <Button type="submit" disabled={saving || !front || !back} className="w-full">
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
-              </Button>
-
-              <DeleteCardButton cardId={cardId} deckId={deckId} />
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
     </AppLayout>
   )
 }

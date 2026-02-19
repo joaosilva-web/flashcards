@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Bold, Italic, Calculator, Superscript, Subscript } from 'lucide-react'
+import { Bold, Italic, Calculator, Superscript, Subscript, Underline, Strikethrough, Code, List, Quote, Highlighter } from 'lucide-react'
 import { parseMarkdownToHtml } from '@/lib/parsers/markdown-parser'
 
 interface MarkdownEditorProps {
@@ -24,7 +24,9 @@ export function MarkdownEditor({
   showPreview = true,
 }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [preview, setPreview] = useState('<p class="text-muted-foreground text-sm">Preview aparecerá aqui...</p>')
+  const [preview, setPreview] = useState(
+    '<p class="text-muted-foreground text-sm">Preview aparecerá aqui...</p>'
+  )
 
   useEffect(() => {
     if (value && value.trim()) {
@@ -63,7 +65,15 @@ export function MarkdownEditor({
     }, 0)
   }
 
-  const formatButtons = [
+  interface FormatButton {
+    icon: React.ComponentType<{ className?: string }>
+    label: string
+    action: () => void
+    separator?: boolean
+  }
+
+  const formatButtons: FormatButton[] = [
+    // Grupo 1: Estilos de texto
     {
       icon: Bold,
       label: 'Negrito',
@@ -75,10 +85,34 @@ export function MarkdownEditor({
       action: () => insertFormatting('*', '*', 'texto'),
     },
     {
+      icon: Underline,
+      label: 'Sublinhado',
+      action: () => insertFormatting('++', '++', 'texto'),
+    },
+    {
+      icon: Strikethrough,
+      label: 'Riscado',
+      action: () => insertFormatting('~~', '~~', 'texto'),
+    },
+    {
+      icon: Highlighter,
+      label: 'Destaque',
+      action: () => insertFormatting('==', '==', 'texto'),
+      separator: true,
+    },
+    // Grupo 2: Código e fórmulas
+    {
+      icon: Code,
+      label: 'Código',
+      action: () => insertFormatting('`', '`', 'código'),
+    },
+    {
       icon: Calculator,
       label: 'Fórmula',
       action: () => insertFormatting('$', '$', 'x^2'),
+      separator: true,
     },
+    // Grupo 3: Sobrescrito e subscrito
     {
       icon: Superscript,
       label: 'Sobrescrito',
@@ -88,28 +122,45 @@ export function MarkdownEditor({
       icon: Subscript,
       label: 'Subscrito',
       action: () => insertFormatting('~', '~', 'texto'),
+      separator: true,
+    },
+    // Grupo 4: Estrutura
+    {
+      icon: List,
+      label: 'Lista',
+      action: () => insertFormatting('- ', '', 'item da lista'),
+    },
+    {
+      icon: Quote,
+      label: 'Citação',
+      action: () => insertFormatting('> ', '', 'citação'),
     },
   ]
 
   return (
     <div className="space-y-2">
       {label && <label className="text-sm font-medium">{label}</label>}
-      
+
       {/* Toolbar */}
-      <div className="flex gap-1 p-1 border rounded-md bg-muted/50">
+      <div className="flex flex-wrap gap-1 p-2 border rounded-md bg-muted/50">
         {formatButtons.map((btn, index) => (
-          <Button
-            key={index}
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={btn.action}
-            disabled={disabled}
-            className="h-8 w-8 p-0"
-            title={btn.label}
-          >
-            <btn.icon className="h-4 w-4" />
-          </Button>
+          <>
+            <Button
+              key={index}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={btn.action}
+              disabled={disabled}
+              className="h-8 w-8 p-0"
+              title={btn.label}
+            >
+              <btn.icon className="h-4 w-4" />
+            </Button>
+            {btn.separator && (
+              <div key={`sep-${index}`} className="w-px bg-border self-stretch mx-0.5" />
+            )}
+          </>
         ))}
       </div>
 
