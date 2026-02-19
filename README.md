@@ -1,6 +1,6 @@
 # FlashLearn - Sistema de Flashcards com Repetição Espaçada
 
-Sistema inteligente de criação e revisão de flashcards com algoritmo de repetição espaçada baseado no SM-2 (SuperMemo 2).
+Sistema inteligente de criação e revisão de flashcards com algoritmo de repetição espaçada FSRS (Free Spaced Repetition Scheduler), baseado em modelagem probabilística da memória.
 
 ## 🚀 Tecnologias
 
@@ -22,11 +22,13 @@ Sistema inteligente de criação e revisão de flashcards com algoritmo de repet
   - Preview ao vivo durante edição
   - Organização em baralhos (decks)
   - Interface visual para criação/edição
-- **Algoritmo de Repetição Espaçada (SM-2)**
-  - Cálculo automático de intervalo de revisão
+- **Algoritmo de Repetição Espaçada (FSRS)**
+  - Modelagem probabilística da memória
+  - Cálculo de dificuldade, estabilidade e retrievability
   - 4 níveis de dificuldade (Errei, Difícil, Bom, Fácil)
   - Ajuste dinâmico baseado no desempenho
   - Tracking completo de revisões
+  - Otimização científica comprovada
 
 - **Importação via CSV**
   - Parser inteligente de CSV
@@ -81,7 +83,7 @@ flashcard-app/
 │   └── ...
 ├── lib/
 │   ├── actions/             # Server Actions
-│   ├── algorithm/           # Algoritmo SM-2
+│   ├── algorithm/           # Algoritmo FSRS
 │   ├── parsers/             # Parsers CSV/Markdown
 │   ├── supabase/            # Config Supabase
 │   └── utils.ts
@@ -97,26 +99,39 @@ flashcard-app/
 - **profiles** - Perfis de usuários
 - **decks** - Baralhos de cards
 - **cards** - Flashcards
-- **card_states** - Estado de revisão (algoritmo SM-2)
+- **card_states** - Estado de revisão (algoritmo FSRS)
 - **review_logs** - Histórico de revisões
 - **study_sessions** - Sessões de estudo
 - **daily_stats** - Estatísticas diárias
 
-### Algoritmo SM-2
+### Algoritmo FSRS
 
-O algoritmo calcula o intervalo de revisão baseado em:
+O FSRS (Free Spaced Repetition Scheduler) é um algoritmo moderno baseado em modelagem probabilística da memória.
 
-1. **Ease Factor (EF)** - Facilidade do card (1.3 a 2.5)
-2. **Intervalo** - Dias até próxima revisão
-3. **Repetições** - Acertos consecutivos
+**Conceitos principais:**
 
-**Fórmula:**
+1. **Difficulty (D)** - Dificuldade do card (1-10)
+2. **Stability (S)** - Estabilidade da memória em dias
+3. **Retrievability (R)** - Probabilidade de lembrar (0-1)
+
+**Fórmulas principais:**
 
 ```
-EF' = EF + (0.1 - (5 - q) × (0.08 + (5 - q) × 0.02))
+# Retrievability (decai exponencialmente)
+R(t) = e^(-t/S)
+
+# Intervalo baseado na retenção desejada
+t = -S * ln(R_target)
+
+# Atualização de estabilidade (quando acerta)
+S' = S * (1 + e^(w1) * D^(w2) * S^(w3) * (1-R)^(w4))
 ```
 
-Onde `q` é a qualidade da resposta (1-4).
+**Vantagens sobre SM-2:**
+- Modelagem matemática mais precisa
+- Parâmetros otimizados empiricamente
+- Considera probabilidade de esquecimento
+- Melhor adaptação à curva de esquecimento individual
 
 ## 🚀 Como Executar
 
@@ -260,12 +275,14 @@ O arquivo `flashcards.csv` que você forneceu pode ser importado:
 - Real-time capabilities
 - PostgreSQL robusto
 
-### Por que SM-2?
+### Por que FSRS?
 
-- Algoritmo comprovado (usado no Anki)
-- Simples de entender e debugar
-- Resultados excelentes
-- Fácil de estender
+- Algoritmo moderno baseado em ciência
+- Modelagem probabilística da memória
+- Parâmetros otimizados empiricamente
+- Melhor precisão que SM-2 tradicional
+- Código open-source e bem documentado
+- Usado por comunidade Anki moderna
 
 ### Por que shadcn/ui?
 

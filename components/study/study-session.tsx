@@ -23,6 +23,11 @@ interface StudyCard {
   interval_days: number
   repetitions: number
   state: string
+  // FSRS fields
+  difficulty: number
+  stability: number
+  retrievability: number
+  last_review_date: string | null
 }
 
 interface StudySessionProps {
@@ -218,6 +223,10 @@ export function StudySession({ cards, deckId, sessionId }: StudySessionProps) {
             interval: currentCard.interval_days,
             repetitions: currentCard.repetitions,
             state: currentCard.state as any,
+            difficulty: currentCard.difficulty,
+            stability: currentCard.stability,
+            retrievability: currentCard.retrievability,
+            lastReviewDate: currentCard.last_review_date ? new Date(currentCard.last_review_date) : undefined,
           }}
         />
       </div>

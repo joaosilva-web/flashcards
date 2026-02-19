@@ -1,7 +1,7 @@
 'use server'
 
 import { createServerClient } from '@/lib/supabase/server'
-import { calculateNextReview } from '@/lib/algorithm/sm2'
+import { calculateNextReview } from '@/lib/algorithm/fsrs'
 import { getStudyCards } from '@/lib/algorithm/scheduler'
 import { DifficultyRating } from '@/types/study'
 import { revalidatePath } from 'next/cache'
@@ -43,66 +43,46 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
     return { success: false, error: 'Estado do card não encontrado' }
   }
 
-  // Calcular próximo estado usando algoritmo SM-2
+  // Calcular última revisão para retrievability
+  let lastReviewDate: Date | undefined
+  if (cardState.last_review_date) {
+    lastReviewDate = new Date(cardState.last_review_date)
+  }
+
+  // Calcular próximo estado usando algoritmo FSRS
   const nextReview = calculateNextReview(
     {
       easeFactor: cardState.ease_factor,
       interval: cardState.interval_days,
       repetitions: cardState.repetitions,
       state: cardState.state,
+      difficulty: cardState.difficulty,
+      stability: cardState.stability,
+      retrievability: cardState.retrievability,
+      lastReviewDate,
     },
     rating
   )
 
-  // Garantir limites antes de salvar (salvaguarda extra)
-  let safeEaseFactor = nextReview.newEaseFactor
-  
-  // Validações de segurança
-  if (isNaN(safeEaseFactor) || !isFinite(safeEaseFactor)) {
-    console.warn('⚠️ ease_factor inválido (NaN/Infinite), resetando para 2.5')
-    safeEaseFactor = 2.5
-  }
-  
-  // Forçar limites rígidos com margem de segurança
-  // Usar 1.31 ao invés de 1.3 para evitar problemas de arredondamento
-  const MIN_SAFE = 1.31
-  const MAX_SAFE = 2.5
-  
-  if (safeEaseFactor < MIN_SAFE) {
-    console.warn(`⚠️ ease_factor abaixo do mínimo (${safeEaseFactor}), forçando para ${MIN_SAFE}`)
-    safeEaseFactor = MIN_SAFE
-  }
-  if (safeEaseFactor > MAX_SAFE) {
-    console.warn(`⚠️ ease_factor acima do máximo (${safeEaseFactor}), forçando para ${MAX_SAFE}`)
-    safeEaseFactor = MAX_SAFE
-  }
-  
-  // Arredondar para 2 casas decimais para evitar problemas de precisão
-  safeEaseFactor = Math.round(safeEaseFactor * 100) / 100
-  
-  // Garantir novamente após arredondamento
-  safeEaseFactor = Math.max(MIN_SAFE, Math.min(MAX_SAFE, safeEaseFactor))
-  
+  // Garantir limites FSRS
+  const safeDifficulty = Math.max(1.0, Math.min(10.0, nextReview.newDifficulty))
+  const safeStability = Math.max(0.1, nextReview.newStability)
+  const safeRetrievability = Math.max(0, Math.min(1, nextReview.newRetrievability))
   const safeInterval = Math.max(0, Math.round(nextReview.newInterval))
+  
+  // Manter ease_factor para compatibilidade (será removido no futuro)
+  let safeEaseFactor = nextReview.newEaseFactor
+  safeEaseFactor = Math.max(1.3, Math.min(2.5, safeEaseFactor))
 
-  console.log('📊 Review Debug:', {
+  console.log('📊 FSRS Review:', {
     cardId: cardState.card_id,
     rating,
-    previous: cardState.ease_factor,
-    calculated: nextReview.newEaseFactor,
-    safe: safeEaseFactor,
+    difficulty: { prev: cardState.difficulty, new: safeDifficulty },
+    stability: { prev: cardState.stability, new: safeStability },
+    retrievability: { prev: cardState.retrievability, new: safeRetrievability },
     interval: safeInterval,
     state: nextReview.newState,
   })
-
-  // Verificação final antes de salvar
-  if (safeEaseFactor < 1.3 || safeEaseFactor > 2.5 || isNaN(safeEaseFactor)) {
-    console.error('🚨 CRÍTICO: Tentativa de salvar ease_factor inválido!', {
-      value: safeEaseFactor,
-      cardId: cardState.card_id,
-    })
-    safeEaseFactor = 1.35 // Último recurso com margem
-  }
 
   // Atualizar estado do card
   const { error: updateError } = await supabase
@@ -117,6 +97,10 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
       last_review_date: new Date().toISOString(),
       total_reviews: cardState.total_reviews + 1,
       correct_reviews: cardState.correct_reviews + (rating >= 3 ? 1 : 0),
+      // FSRS fields
+      difficulty: safeDifficulty,
+      stability: safeStability,
+      retrievability: safeRetrievability,
     })
     .eq('id', cardState.id)
 
@@ -138,6 +122,13 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
     new_interval_days: safeInterval,
     new_state: nextReview.newState,
     new_due_date: nextReview.dueDate.toISOString(),
+    // FSRS fields
+    previous_difficulty: cardState.difficulty,
+    previous_stability: cardState.stability,
+    previous_retrievability: cardState.retrievability,
+    new_difficulty: safeDifficulty,
+    new_stability: safeStability,
+    new_retrievability: safeRetrievability,
   })
 
   // Atualizar estatísticas diárias

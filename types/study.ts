@@ -8,6 +8,10 @@ export interface ReviewResult {
   newRepetitions: number
   newState: CardState
   dueDate: Date
+  // FSRS fields
+  newDifficulty: number
+  newStability: number
+  newRetrievability: number
 }
 
 export interface CardReviewData {
@@ -15,4 +19,9 @@ export interface CardReviewData {
   interval: number
   repetitions: number
   state: CardState
+  // FSRS fields
+  difficulty: number
+  stability: number
+  retrievability: number
+  lastReviewDate?: Date
 }

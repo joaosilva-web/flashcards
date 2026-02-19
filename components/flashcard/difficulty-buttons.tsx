@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { DifficultyRating } from '@/types/study'
-import { formatInterval, calculateIntervalPreview } from '@/lib/algorithm/sm2'
+import { formatInterval, calculateIntervalPreview } from '@/lib/algorithm/fsrs'
 import { CardReviewData } from '@/types/study'
 
 interface DifficultyButtonsProps {

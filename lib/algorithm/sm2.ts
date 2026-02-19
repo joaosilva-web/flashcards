@@ -98,6 +98,10 @@ export function calculateNextReview(
     newRepetitions: repetitions,
     newState: state,
     dueDate,
+    // FSRS fields (estimados para compatibilidade)
+    newDifficulty: Math.max(1.0, Math.min(10.0, 2.5 - (newEaseFactor - 5.0) * 0.15)),
+    newStability: Math.max(0.1, interval),
+    newRetrievability: rating >= 3 ? 1.0 : 0.0,
   }
 }
 

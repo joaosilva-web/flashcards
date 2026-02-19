@@ -2,6 +2,58 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [2.0.0] - 2026-02-19
+
+### 🚀 MAJOR UPDATE: Migração para FSRS
+
+#### ✨ Novo Algoritmo de Repetição Espaçada
+
+- **Substituição do SM-2 pelo FSRS** (Free Spaced Repetition Scheduler)
+- Modelagem probabilística moderna da memória
+- Três métricas principais:
+  - **Difficulty (D)**: Dificuldade do card (1-10)
+  - **Stability (S)**: Estabilidade da memória em dias
+  - **Retrievability (R)**: Probabilidade de lembrar (0-1)
+- Fórmulas matemáticas baseadas em pesquisa científica
+- Parâmetros otimizados empiricamente (w1-w9)
+- Melhor precisão na previsão de esquecimento
+
+#### 🗄️ Migração de Banco de Dados
+
+- Adicionados novos campos em `card_states`:
+  - `difficulty` (REAL): 5.0 padrão
+  - `stability` (REAL): 0.0 padrão
+  - `retrievability` (REAL): 1.0 padrão
+- Adicionados campos FSRS em `review_logs` para histórico
+- Script de migração automático para converter dados SM-2 existentes
+- Manutenção de `ease_factor` para compatibilidade temporária
+- Função SQL `calculate_retrievability()` para análises
+
+#### 🔧 Melhorias Técnicas
+
+- Novo módulo `lib/algorithm/fsrs.ts` com implementação completa
+- Atualização de tipos TypeScript para suportar FSRS
+- Componentes de UI atualizados para exibir previsões FSRS
+- Logs detalhados de revisão com métricas FSRS
+- Documentação completa em `fsrs.md`
+
+#### 📈 Vantagens sobre SM-2
+
+- Modelagem matemática mais precisa do esquecimento
+- Adaptação personalizada à curva de memória individual
+- Consideração explícita da probabilidade de esquecimento
+- Intervalos mais otimizados para maximizar retenção
+- Base científica moderna e validada
+
+#### 🔄 Retrocompatibilidade
+
+- Dados SM-2 existentes migrados automaticamente
+- Conversão inteligente de ease_factor para difficulty
+- Stability inicializada baseada em interval_days
+- Sistema funciona imediatamente após migração
+
+---
+
 ## [1.0.0] - 2024-01-XX
 
 ### ✨ Funcionalidades Principais

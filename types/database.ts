@@ -126,6 +126,10 @@ export interface Database {
           correct_reviews: number
           created_at: string
           updated_at: string
+          // FSRS fields
+          difficulty: number
+          stability: number
+          retrievability: number
         }
         Insert: {
           id?: string
@@ -141,6 +145,10 @@ export interface Database {
           correct_reviews?: number
           created_at?: string
           updated_at?: string
+          // FSRS fields
+          difficulty?: number
+          stability?: number
+          retrievability?: number
         }
         Update: {
           id?: string
@@ -156,6 +164,10 @@ export interface Database {
           correct_reviews?: number
           created_at?: string
           updated_at?: string
+          // FSRS fields
+          difficulty?: number
+          stability?: number
+          retrievability?: number
         }
       }
       review_logs: {
