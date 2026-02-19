@@ -203,16 +203,21 @@ export function calculateNextReview(
 
   // Card novo - estabelecer valores iniciais
   if (state === 'new') {
-    if (rating >= 3) {
-      // Acertou pela primeira vez
+    if (rating >= 2) {
+      // Acertou pela primeira vez (incluindo "Difícil")
       newStability = calculateInitialStability(rating)
-      newDifficulty = 5.0 + (4 - rating) * 1.5 // Rating 4 -> D=3.5, Rating 3 -> D=6.5
+      newDifficulty = 5.0 + (4 - rating) * 1.5 // Rating 4 -> D=3.5, Rating 3 -> D=6.5, Rating 2 -> D=8.0
       newRetrievability = 1.0
       newRepetitions = 1
       newState = 'learning'
       newInterval = calculateInterval(newStability)
+      
+      // Se rating 2 (Hard), reduzir intervalo
+      if (rating === 2) {
+        newInterval = Math.max(1, Math.round(newInterval * 0.5))
+      }
     } else {
-      // Errou pela primeira vez
+      // rating === 1: Errou pela primeira vez
       newStability = MINIMUM_STABILITY
       newDifficulty = 7.0
       newRetrievability = 0.0
@@ -222,8 +227,8 @@ export function calculateNextReview(
     }
   } else {
     // Card em aprendizado ou revisão
-    if (rating >= 3) {
-      // Acertou
+    if (rating >= 2) {
+      // Acertou (incluindo "Difícil" que é rating 2)
       newStability = updateStabilityOnSuccess(stability, difficulty, currentRetrievability)
       newDifficulty = updateDifficulty(difficulty, rating, currentRetrievability)
       newRetrievability = 1.0
@@ -236,11 +241,11 @@ export function calculateNextReview(
         // Easy: aumentar intervalo um pouco mais
         newInterval = Math.round(newInterval * 1.2)
       } else if (rating === 2) {
-        // Hard (mas correto): reduzir intervalo
-        newInterval = Math.round(newInterval * 0.85)
+        // Hard: reduzir intervalo significativamente
+        newInterval = Math.max(1, Math.round(newInterval * 0.5))
       }
     } else {
-      // Errou - reaprendizado
+      // rating === 1: Errou completamente - reaprendizado
       newStability = updateStabilityOnFailure(stability)
       newDifficulty = updateDifficulty(difficulty, rating, currentRetrievability)
       newRetrievability = 0.0
@@ -303,7 +308,7 @@ export function calculateIntervalPreview(
   // Simular a nova estabilidade para cada rating
   const previewStabilities = {
     1: updateStabilityOnFailure(stability), // Again: estabilidade reduzida
-    2: updateStabilityOnSuccess(stability, difficulty, currentRetrievability) * 0.85, // Hard: penalizar um pouco
+    2: updateStabilityOnSuccess(stability, difficulty, currentRetrievability) * 0.5, // Hard: reduzir mais
     3: updateStabilityOnSuccess(stability, difficulty, currentRetrievability), // Good: estabilidade normal
     4: updateStabilityOnSuccess(stability, difficulty, currentRetrievability) * 1.2, // Easy: bônus
   }

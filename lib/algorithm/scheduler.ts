@@ -38,7 +38,7 @@ export async function getDueCards(
   const { data, error } = await query
 
   if (error) throw error
-  
+
   console.log('📋 getDueCards result:', {
     count: data?.length || 0,
     cards: (data as any)?.map((c: any) => ({
@@ -46,8 +46,8 @@ export async function getDueCards(
       state: c.state,
       interval: c.interval_days,
       due: c.due_date,
-      isDue: new Date(c.due_date) <= new Date(now)
-    }))
+      isDue: new Date(c.due_date) <= new Date(now),
+    })),
   })
 
   return (data as any) || []
@@ -84,14 +84,14 @@ export async function getNewCards(
   const { data, error } = await query
 
   if (error) throw error
-  
+
   console.log('📋 getNewCards result:', {
     count: data?.length || 0,
     cards: (data as any)?.map((c: any) => ({
       id: c.card_id,
       state: c.state,
-      due: c.due_date
-    }))
+      due: c.due_date,
+    })),
   })
 
   return (data as any) || []

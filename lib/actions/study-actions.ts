@@ -98,7 +98,7 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
       due_date: nextReview.dueDate.toISOString(),
       last_review_date: new Date().toISOString(),
       total_reviews: cardState.total_reviews + 1,
-      correct_reviews: cardState.correct_reviews + (rating >= 3 ? 1 : 0),
+      correct_reviews: cardState.correct_reviews + (rating >= 2 ? 1 : 0),
       // FSRS fields
       difficulty: safeDifficulty,
       stability: safeStability,
@@ -165,7 +165,7 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
       // @ts-ignore - Supabase type inference issue with update
       .update({
         cards_studied: todayStats.cards_studied + 1,
-        cards_correct: todayStats.cards_correct + (rating >= 3 ? 1 : 0),
+        cards_correct: todayStats.cards_correct + (rating >= 2 ? 1 : 0),
         new_cards: todayStats.new_cards + (cardState.state === 'new' ? 1 : 0),
         review_cards: todayStats.review_cards + (cardState.state !== 'new' ? 1 : 0),
         total_time_ms: todayStats.total_time_ms + timeSpentMs,
@@ -179,7 +179,7 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
         user_id: user.id,
         date: today,
         cards_studied: 1,
-        cards_correct: rating >= 3 ? 1 : 0,
+        cards_correct: rating >= 2 ? 1 : 0,
         new_cards: cardState.state === 'new' ? 1 : 0,
         review_cards: cardState.state !== 'new' ? 1 : 0,
         total_time_ms: timeSpentMs,
