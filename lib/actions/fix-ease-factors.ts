@@ -21,7 +21,7 @@ export async function fixEaseFactors() {
     const { data: cardStates, error: fetchError } = await supabase
       .from('card_states')
       .select('id, ease_factor')
-      .eq('user_id', user.id)
+      .eq('user_id', user.id) as { data: { id: string; ease_factor: number }[] | null; error: any }
 
     if (fetchError) throw fetchError
 
@@ -35,10 +35,12 @@ export async function fixEaseFactors() {
       if (state.ease_factor < 1.3 || state.ease_factor > 2.5) {
         const correctedEF = Math.max(1.3, Math.min(2.5, state.ease_factor))
         
-        await supabase
-          .from('card_states')
+        const { error: updateError } = await (supabase
+          .from('card_states') as any)
           .update({ ease_factor: correctedEF })
           .eq('id', state.id)
+        
+        if (updateError) throw updateError
         
         fixed++
       }
