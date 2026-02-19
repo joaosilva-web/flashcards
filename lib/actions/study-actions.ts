@@ -102,7 +102,8 @@ export async function reviewCard(cardId: string, rating: DifficultyRating, timeS
       stability: safeStability,
       retrievability: safeRetrievability,
     })
-    .eq('id', cardState.id)
+    .eq('card_id', cardId)
+    .eq('user_id', user.id)
 
   if (updateError) {
     return { success: false, error: updateError.message }
