@@ -14,7 +14,7 @@ type Card = Database['public']['Tables']['cards']['Row']
 type CardState = Database['public']['Tables']['card_states']['Row']
 
 type CardWithState = Card & {
-  card_states: CardState[]
+  card_states: CardState[] | CardState
 }
 
 function formatTimeUntilDue(dueDate: string): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
@@ -189,7 +189,7 @@ export default async function DeckDetailPage({ params }: { params: { id: string 
         {cards && cards.length > 0 ? (
           <div className="space-y-2">
             {cards.map((card: CardWithState) => {
-              const cardState = card.card_states[0]
+              const cardState = Array.isArray(card.card_states) ? card.card_states[0] : card.card_states
               const timeUntil = cardState ? formatTimeUntilDue(cardState.due_date) : null
 
               return (
