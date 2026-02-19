@@ -25,8 +25,8 @@ const FSRS_WEIGHTS = {
   w5: 0.5846, // taxa de ajuste de dificuldade
 
   // Pesos para estabilidade inicial (primeiro aprendizado)
-  w6: 1.0, // multiplicador base de estabilidade inicial
-  w7: 0.1, // fator de dificuldade inicial
+  w6: 5.0, // multiplicador base de estabilidade inicial
+  w7: 0.5, // fator de crescimento entre ratings
 
   // Pesos para reaprendizado (quando erra)
   w8: 0.9, // fator de retenção de estabilidade após erro
@@ -153,10 +153,10 @@ function calculateInitialStability(rating: DifficultyRating): number {
   const { w6, w7 } = FSRS_WEIGHTS
 
   // Rating maior -> maior estabilidade inicial
-  // 1 (Again) -> ~0.4 dias
-  // 2 (Hard) -> ~1.0 dia
-  // 3 (Good) -> ~2.5 dias
-  // 4 (Easy) -> ~7.0 dias
+  // 1 (Again) -> ~5.0 dias → ~0.5 dia de intervalo
+  // 2 (Hard) -> ~10.0 dias → ~1.0 dia de intervalo
+  // 3 (Good) -> ~26.0 dias → ~2.7 dias de intervalo
+  // 4 (Easy) -> ~80.0 dias → ~8.4 dias de intervalo
   const baseStability = w6 * Math.pow(rating, w7 * rating)
 
   return Math.max(MINIMUM_STABILITY, baseStability)
@@ -294,9 +294,9 @@ export function calculateIntervalPreview(
   if (state === 'new' || stability <= 0) {
     return {
       1: 0, // Again: revisar hoje
-      2: 1, // Hard: 1 dia (usando estabilidade inicial mínima)
-      3: Math.round(calculateInterval(calculateInitialStability(3))), // Good: ~4 dias
-      4: Math.round(calculateInterval(calculateInitialStability(4))), // Easy: ~7 dias
+      2: 1, // Hard: 1 dia
+      3: Math.round(calculateInterval(calculateInitialStability(3))), // Good: ~3 dias
+      4: Math.round(calculateInterval(calculateInitialStability(4))), // Easy: ~8 dias
     }
   }
 
